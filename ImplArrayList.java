@@ -1,8 +1,25 @@
-public class ImplArrayList implements CustomList {
+public class ImplArrayList<E> implements CustomList<E> {
 		public static final int STACK_SIZE = 16;
 
- 	 	private Object[] list = new Object[STACK_SIZE];
+ 	 	private Object[] list;
  	 	private int size = 0;
+
+
+
+ 	 	private void reorderList() {
+ 	 		Object[] oldlist = list.clone();
+
+			this.list = new Object[list.length];
+
+ 	 		for(int i = 0, j = 0; i < list.length; i++) {
+ 	 			if(oldlist[i] != null) list[j++] = oldlist[i];
+ 	 		}
+ 	 	}
+
+
+ 	 	public ImplArrayList () {
+ 	 		this.list = new Object[STACK_SIZE];
+ 	 	}
 
 		@Override
 		public void clear() {
@@ -15,7 +32,7 @@ public class ImplArrayList implements CustomList {
 		}
 
 		@Override
-		public void add(Object e) {
+		public void add(E e) {
 			int lastSize = size;
 
 			//fuck...find free space
@@ -36,18 +53,19 @@ public class ImplArrayList implements CustomList {
 		}
 
 		@Override
-		public Object get(int index) {
-			return this.list[index];
+		public E get(int index) {
+			return (E)this.list[index];
 		}
 
 		@Override
 		public void remove(int index) {
 			this.list[index] = null;
 							 --this.size;
+			this.reorderList();
 		}
 
 		@Override
-		public void remove(Object e) {
+		public void remove(E e) {
 			for ( int i = 0; i < this.list.length; i++) {
 				if(this.list[i] == null) continue;
 
@@ -57,10 +75,11 @@ public class ImplArrayList implements CustomList {
 					break;
 				}
 			}
+			this.reorderList();
 		}
 
 //		@Override
-		public void removeAll(Object e) {
+		public void removeAll(E e) {
 			for ( int i = 0; i < this.list.length; i++) {
 				if(this.list[i] == null) continue;
 				
@@ -69,10 +88,11 @@ public class ImplArrayList implements CustomList {
 								 --this.size;
 				}
 			}
+			this.reorderList();
 		}
 
 		@Override
-		public int indexOf(Object e) {
+		public int indexOf(E e) {
 			for ( int i = 0; i < this.list.length; i++) {
 				if(this.list[i] == null) continue;
 				
@@ -84,20 +104,21 @@ public class ImplArrayList implements CustomList {
 		}
 
 		@Override
-		public void set(int index, Object e) {
+		public void set(int index, E e) {
 			this.list[index] = e;
 		}
 
 		@Override
-		public void add(int index, Object e) {
-			if(list[index] == null) {
+		public void add(int index, E e) {
+			if(this.list[index] == null) {
 				this.set(index, e);
 				return;
 			}
 			
-			Object[] oldlist = list.clone();
 
 			if( (size + 1) > list.length ) { // у нас выход за рамки выделенной области
+				
+				Object[] oldlist = this.list.clone();
 				this.list = new Object[list.length + STACK_SIZE];
 	    		System.arraycopy(oldlist, 0, list, 0, oldlist.length);	
 			}
