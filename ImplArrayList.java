@@ -1,102 +1,96 @@
 public class ImplArrayList<E> implements CustomList<E> {
-		public static final int STACK_SIZE = 16;
+		public static final int STACK_SIZE = 16; // стак не в смысле стек вызовов, но в смысле множество элементов(копна)
 
- 	 	private Object[] list;
- 	 	private int size = 0;
+ 	 	private Object[] array;
+ 	 	private int size = 0; // первичная инициализация
 
+ 	 	{
+ 	 		array = new Object[STACK_SIZE];
+ 	 	}
 
+ 	 	private void reorder() { // меняет порядок элементов (сортирует) так чтобы null не попадался вначале или середине массива
+ 	 		Object[] oldarray = array.clone();
 
- 	 	private void reorderList() {
- 	 		Object[] oldlist = list.clone();
+			array = new Object[array.length]; // пересоздаём массив (он заполняется null по умолчанию)
 
-			this.list = new Object[list.length];
-
- 	 		for(int i = 0, j = 0; i < list.length; i++) {
- 	 			if(oldlist[i] != null) list[j++] = oldlist[i];
+ 	 		for(int i = 0, j = 0; i < array.length; i++) {
+ 	 			if(oldarray[i] != null) array[j++] = oldarray[i];
  	 		}
  	 	}
 
-
- 	 	public ImplArrayList () {
- 	 		this.list = new Object[STACK_SIZE];
- 	 	}
-
 		@Override
-		public void clear() {
-			this.list = new Object[STACK_SIZE];
+		public void clear() { // возвращаем массив в исходное состояние
+			array = new Object[STACK_SIZE];
 		}
 
 		@Override
 		public int size() {
-			return this.size;
+			return size;
 		}
 
 		@Override
 		public void add(E e) {
-			int lastSize = size;
 
-			//fuck...find free space
-			for ( int i = 0; i < this.list.length; i++) {
-				if(this.list[i] == null) {
-					this.list[i] = e;
-					this.size++;
-					break;
-				}
+			try { // поскольку массив сортирован, можно добавлять сразу после последнего добавленного элемента
+				array[size] = e;
+				size++;
 			}
-			if(lastSize == size) { // бл*ть, ничего не найдено, значит массив полон. перепихиваем массив в массив побольше
-				Object[] oldlist = list.clone();
-				this.list = new Object[list.length + STACK_SIZE];
-    			System.arraycopy(oldlist, 0, list, 0, oldlist.length);	
-				this.list[size] = e;
-				this.size++;
-    		}
+			catch (IndexOutOfBoundsException ex) { // выход за границы массива, значит массив полон. выделяем массиву больше места
+				Object[] oldarray = array.clone();
+				array = new Object[array.length + STACK_SIZE];
+    			System.arraycopy(oldarray, 0, array, 0, oldarray.length);	
+				array[size] = e;
+				size++;
+			}
 		}
 
 		@Override
 		public E get(int index) {
-			return (E)this.list[index];
+			return (E) array[index];
 		}
 
 		@Override
 		public void remove(int index) {
-			this.list[index] = null;
-							 --this.size;
-			this.reorderList();
+			array[index] = null;
+			-- size;
+
+			// небольшой хак, если мы удаляем элемент с самого края, то массиву ненужна пересортировка
+			if(size != index) reorder();
 		}
 
 		@Override
 		public void remove(E e) {
-			for ( int i = 0; i < this.list.length; i++) {
-				if(this.list[i] == null) continue;
+			for (int i = 0; i < array.length; i++) {
+				if(array[i] == null) continue;
 
-				if(this.list[i].equals(e)) {
-					this.list[i] = null;
-								 --this.size;
+				if(array[i].equals(e)) {
+					array[i] = null;
+					-- size;
 					break;
 				}
 			}
-			this.reorderList();
+			reorder();
 		}
 
 //		@Override
 		public void removeAll(E e) {
-			for ( int i = 0; i < this.list.length; i++) {
-				if(this.list[i] == null) continue;
+			for ( int i = 0; i < array.length; i++) {
+				if(array[i] == null) continue;
 				
-				if(this.list[i].equals(e)) {
-					this.list[i] = null;
-								 --this.size;
+				if(array[i].equals(e)) {
+					array[i] = null;
+					-- size;
 				}
 			}
-			this.reorderList();
+			reorder();
 		}
 
 		@Override
 		public int indexOf(E e) {
-			for ( int i = 0; i < this.list.length; i++) {
-				if(this.list[i] == null) continue;
+			for ( int i = 0; i < array.length; i++) {
+				if(array[i] == null) continue;
 				
-				if(this.list[i].equals(e)) {
+				if(array[i].equals(e)) {
 					return i;
 				}
 			}
@@ -105,31 +99,31 @@ public class ImplArrayList<E> implements CustomList<E> {
 
 		@Override
 		public void set(int index, E e) {
-			this.list[index] = e;
+			array[index] = e;
 		}
 
 		@Override
 		public void add(int index, E e) {
-			if(this.list[index] == null) {
-				this.set(index, e);
+			if(array[index] == null) {
+				set(index, e);
 				return;
 			}
 			
 
-			if( (size + 1) > list.length ) { // у нас выход за рамки выделенной области
+			if( (size + 1) > array.length ) { // у нас выход за рамки выделенной области
 				
-				Object[] oldlist = this.list.clone();
-				this.list = new Object[list.length + STACK_SIZE];
-	    		System.arraycopy(oldlist, 0, list, 0, oldlist.length);	
+				Object[] oldarray = array.clone();
+				array = new Object[array.length + STACK_SIZE];
+	    		System.arraycopy(oldarray, 0, array, 0, oldarray.length);	
 			}
 
 
 
-			Object[] slice = java.util.Arrays.copyOfRange(list, index, list.length);
-			System.arraycopy(slice, 0, list, index+1, slice.length-1);
+			Object[] slice = java.util.Arrays.copyOfRange(array, index, array.length);
+			System.arraycopy(slice, 0, array, index+1, slice.length-1);
 
-			this.list[index] = e;
-			this.size++;
+			array[index] = e;
+			size++;
 		}
 
 }
